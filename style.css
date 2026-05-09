@@ -405,8 +405,111 @@ button:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 @media (max-width: 900px) {
   .sidebar { width: 240px; }
 }
-@media (max-width: 680px) {
-  .game-layout { flex-direction: column; }
-  .sidebar { width: 100%; max-height: 280px; flex-direction: row; flex-wrap: wrap; overflow-x: auto; border-left: none; border-top: 2px solid var(--board-line); }
-  .panel { min-width: 200px; }
+
+/* ── 태블릿 (601–900px) ── */
+@media (max-width: 760px) {
+  .sidebar { width: 200px; padding: 10px; gap: 8px; }
+  .btn-action { min-height: 42px; font-size: 0.88rem; }
+  .current-team-name { font-size: 1rem; }
+}
+
+/* ── 모바일 (≤600px): 세로 스크롤 레이아웃 ── */
+@media (max-width: 600px) {
+  /* 게임 화면: 고정 높이 해제 → 스크롤 가능 */
+  #screen-game {
+    height: auto;
+    min-height: 100vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  /* 상단 바 */
+  .game-topbar { padding: 8px 12px; gap: 8px; }
+  .topbar-title { gap: 1px; }
+  .title-ko-sm { font-size: 0.85rem; }
+  .title-id-sm { font-size: 0.6rem; }
+  .btn-icon { font-size: 1.2rem; padding: 4px 8px; }
+
+  /* 보드 + 사이드바 세로 배치 */
+  .game-layout {
+    flex-direction: column;
+    overflow: visible;
+    flex: unset;
+  }
+
+  /* 보드 영역 */
+  .board-area {
+    padding: 8px;
+    overflow: visible;
+    flex: unset;
+  }
+  #board-container {
+    width: 100%;
+    max-width: 100%;
+    /* 100vh 기반 계산 제거 → 정사각형으로 자동 */
+  }
+
+  /* 사이드바: 전체 너비, 자연스럽게 확장 */
+  .sidebar {
+    width: 100%;
+    height: auto;
+    overflow: visible;
+    flex-direction: column;
+    flex-shrink: 0;
+    border-left: none;
+    border-top: 2px solid var(--board-line);
+    padding: 10px 12px 16px;
+    gap: 8px;
+  }
+  .panel { min-width: unset; }
+
+  /* 점수판 */
+  .scoreboard-header { font-size: 0.85rem; }
+  .btn-score-popup { font-size: 0.68rem; }
+
+  /* 현재 차례 패널 */
+  .turn-label { font-size: 0.75rem; }
+  .current-team-name { font-size: 1rem; }
+  .pending-results-label { font-size: 0.75rem; }
+  .phase-hint { font-size: 0.7rem; }
+
+  /* 액션 버튼 */
+  .btn-action { min-height: 44px; font-size: 0.9rem; }
+
+  /* 오버레이: 작은 화면에서 스크롤 허용 */
+  .overlay { padding: 12px; align-items: flex-start; padding-top: 32px; overflow-y: auto; }
+  .overlay-card { padding: 20px 16px; max-height: calc(100vh - 48px); overflow-y: auto; }
+
+  /* 윷 결과 그리드: 2×3 → 2열 */
+  .yut-result-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .btn-yut-result { padding: 10px 6px; }
+  .yut-name { font-size: 1.3rem; }
+  .yut-move { font-size: 0.8rem; }
+
+  /* 미션 카드 */
+  .mission-card { max-width: 100%; }
+  .mission-title-ko { font-size: 1.1rem; }
+  .mission-content-ko { font-size: 0.95rem; }
+  .btn-mission { padding: 10px 6px; font-size: 0.88rem; min-width: 80px; }
+
+  /* 경로 선택 버튼: 세로 배치 */
+  .path-buttons { flex-direction: column; }
+  .btn-path { padding: 12px 10px; }
+
+  /* 전체 점수 팝업 */
+  .scores-card { max-width: 100%; padding: 20px 16px; }
+
+  /* 설정 화면 */
+  .setup-container { padding: 16px 12px 40px; gap: 16px; }
+  .setup-card { padding: 20px 14px; gap: 16px; }
+  .title-ko { font-size: 1.5rem; }
+  .section-title { font-size: 1.1rem; }
+  .form-label { font-size: 0.9rem; min-width: 130px; }
+  .score-input { width: 78px; }
+
+  /* 결과 화면 */
+  .result-container { padding: 24px 12px; }
+  .result-rank { font-size: 1.2rem; }
+  .result-name { font-size: 0.95rem; }
+  .result-score { font-size: 1.05rem; }
 }
