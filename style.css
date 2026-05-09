@@ -48,6 +48,7 @@ html, body {
 .title-id    { font-size: 1rem; font-style: italic; color: var(--text-id); font-family: 'Noto Sans', sans-serif; }
 .title-ko-sm { font-size: 1.1rem; font-weight: 700; color: var(--text); }
 .title-id-sm { font-size: 0.75rem; font-style: italic; color: var(--text-id); font-family: 'Noto Sans', sans-serif; }
+.title-subtitle { font-size: 0.85rem; color: var(--text-sub); font-family: 'Noto Sans', sans-serif; margin-top: 6px; }
 .lbl-id      { font-size: 0.75em; font-style: italic; color: var(--text-id); font-family: 'Noto Sans', sans-serif; display: block; }
 .sub-id      { font-size: 0.6em; font-style: italic; color: var(--text-id); font-family: 'Noto Sans', sans-serif; display: block; font-weight: 400; }
 
