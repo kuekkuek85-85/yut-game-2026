@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>함께 던지고, 함께 자라다 — Bersama Melempar, Bersama Bertumbuh</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ===== 설정 화면 (Screen 1) ===== -->
+  <div id="screen-setup" class="screen active">
+    <div class="setup-container">
+      <header class="game-header">
+        <h1 class="title-ko">함께 던지고, 함께 자라다</h1>
+        <p class="title-id">Bersama Melempar, Bersama Bertumbuh</p>
+      </header>
+
+      <div class="setup-card">
+        <h2 class="section-title">
+          게임 설정
+          <span class="sub-id">Pengaturan Permainan</span>
+        </h2>
+
+        <!-- 팀 수 -->
+        <div class="form-row">
+          <label class="form-label">
+            팀 수 <span class="lbl-id">Jumlah Tim</span>
+          </label>
+          <div class="input-group">
+            <button class="btn-num" id="btn-teams-minus">−</button>
+            <span id="teams-count" class="num-display">9</span>
+            <button class="btn-num" id="btn-teams-plus">+</button>
+          </div>
+        </div>
+
+        <!-- 말 수 -->
+        <div class="form-row">
+          <label class="form-label">
+            팀당 말 수 <span class="lbl-id">Bidak per Tim</span>
+          </label>
+          <div class="input-group">
+            <button class="btn-num" id="btn-pieces-minus">−</button>
+            <span id="pieces-count" class="num-display">1</span>
+            <button class="btn-num" id="btn-pieces-plus">+</button>
+          </div>
+        </div>
+
+        <!-- 점수 설정 -->
+        <div class="form-row">
+          <label class="form-label">
+            미션 성공 점수 <span class="lbl-id">Skor Misi Berhasil</span>
+          </label>
+          <input type="number" id="score-success" class="score-input" value="10" min="0" max="100" />
+        </div>
+        <div class="form-row">
+          <label class="form-label">
+            미션 실패 점수 <span class="lbl-id">Skor Misi Gagal</span>
+          </label>
+          <input type="number" id="score-fail" class="score-input" value="-5" min="-100" max="0" />
+        </div>
+        <div class="form-row">
+          <label class="form-label">
+            완주 보너스 <span class="lbl-id">Bonus Selesai</span>
+          </label>
+          <input type="number" id="score-bonus" class="score-input" value="20" min="0" max="100" />
+        </div>
+
+        <button id="btn-start" class="btn-primary btn-large">
+          게임 시작
+          <span class="btn-sub-id">Mulai Permainan</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 게임 화면 (Screen 2) ===== -->
+  <div id="screen-game" class="screen">
+    <!-- 헤더 -->
+    <header class="game-topbar">
+      <div class="topbar-title">
+        <span class="title-ko-sm">함께 던지고, 함께 자라다</span>
+        <span class="title-id-sm">Bersama Melempar, Bersama Bertumbuh</span>
+      </div>
+      <button id="btn-settings" class="btn-icon" title="설정 / Pengaturan">⚙</button>
+    </header>
+
+    <div class="game-layout">
+      <!-- 보드 영역 -->
+      <div class="board-area">
+        <div id="board-container">
+          <svg id="yut-board" viewBox="0 0 640 640" xmlns="http://www.w3.org/2000/svg">
+            <!-- JS로 렌더링 -->
+          </svg>
+        </div>
+      </div>
+
+      <!-- 사이드바 -->
+      <aside class="sidebar">
+        <!-- 점수판 (현재 팀 점수 + 전체 보기 버튼) -->
+        <div class="panel scoreboard-panel">
+          <div class="scoreboard-header">
+            <span class="scoreboard-title">점수판 <span class="lbl-id-inline">Papan Skor</span></span>
+          </div>
+          <button id="btn-show-scores" class="btn-score-popup">📊 전체 점수 보기 / Semua Skor</button>
+          <div id="current-team-score" class="current-team-score"></div>
+        </div>
+
+        <!-- 현재 차례 -->
+        <div class="panel turn-panel">
+          <div class="turn-label">
+            현재 차례 <span class="lbl-id">Giliran Sekarang</span>
+          </div>
+          <div id="current-team-display" class="current-team-name">—</div>
+          <div id="phase-hint" class="phase-hint"></div>
+
+          <!-- 던진 결과 대기 목록 -->
+          <div class="pending-results-label">
+            던진 결과 <span class="lbl-id">Hasil Lemparan</span>
+          </div>
+          <div id="pending-results" class="pending-results"></div>
+        </div>
+
+        <!-- 액션 버튼 -->
+        <div class="panel action-panel">
+          <button id="btn-throw" class="btn-primary btn-action">
+            🎲 윷 던지기
+            <span class="btn-sub-id">Lempar Yut</span>
+          </button>
+          <button id="btn-undo" class="btn-ghost btn-action" style="display:none">
+            ← 이전으로
+            <span class="btn-sub-id">Kembali</span>
+          </button>
+          <button id="btn-end-game" class="btn-ghost btn-action btn-end">
+            수업 마치기
+            <span class="btn-sub-id">Akhiri Pelajaran</span>
+          </button>
+        </div>
+      </aside>
+    </div>
+
+    <!-- 윷 결과 입력 다이얼로그 -->
+    <div id="throw-overlay" class="overlay hidden">
+      <div class="overlay-card throw-card">
+        <h2 class="throw-title">
+          윷 결과 입력
+          <span class="lbl-id">Input Hasil Yut</span>
+        </h2>
+        <p class="throw-subtitle">실제 윷을 던진 후 나온 결과를 선택하세요.<br><span class="lbl-id">Pilih hasil setelah melempar yut sungguhan.</span></p>
+        <div class="yut-result-grid">
+          <button class="btn-yut-result" data-move="-1" data-name="백도" data-name-id="Mundur Satu">
+            <span class="yut-name">백도</span>
+            <span class="yut-name-id">Mundur Satu</span>
+            <span class="yut-move">−1칸</span>
+          </button>
+          <button class="btn-yut-result" data-move="1" data-name="도" data-name-id="Do">
+            <span class="yut-name">도</span>
+            <span class="yut-name-id">Do</span>
+            <span class="yut-move">+1칸</span>
+          </button>
+          <button class="btn-yut-result" data-move="2" data-name="개" data-name-id="Gae">
+            <span class="yut-name">개</span>
+            <span class="yut-name-id">Gae</span>
+            <span class="yut-move">+2칸</span>
+          </button>
+          <button class="btn-yut-result" data-move="3" data-name="걸" data-name-id="Geol">
+            <span class="yut-name">걸</span>
+            <span class="yut-name-id">Geol</span>
+            <span class="yut-move">+3칸</span>
+          </button>
+          <button class="btn-yut-result extra" data-move="4" data-name="윷" data-name-id="Yut">
+            <span class="yut-name">윷</span>
+            <span class="yut-name-id">Yut</span>
+            <span class="yut-move">+4칸</span>
+            <span class="yut-extra">한 번 더!</span>
+          </button>
+          <button class="btn-yut-result extra" data-move="5" data-name="모" data-name-id="Mo">
+            <span class="yut-name">모</span>
+            <span class="yut-name-id">Mo</span>
+            <span class="yut-move">+5칸</span>
+            <span class="yut-extra">한 번 더!</span>
+          </button>
+        </div>
+        <button id="btn-close-throw" class="btn-ghost" style="align-self:center; margin-top:4px;">
+          취소 / Batal
+        </button>
+      </div>
+    </div>
+
+    <!-- 경로 선택 다이얼로그 -->
+    <div id="path-dialog" class="overlay hidden">
+      <div class="overlay-card path-card">
+        <h2 class="path-title">
+          경로를 선택하세요
+          <span class="lbl-id">Pilih Jalur</span>
+        </h2>
+        <p id="path-corner-info" class="path-corner-info"></p>
+        <div class="path-buttons">
+          <button id="btn-path-diagonal" class="btn-path btn-diagonal">
+            ↗ 대각선으로
+            <span class="btn-sub-id">Jalur Diagonal</span>
+          </button>
+          <button id="btn-path-outer" class="btn-path btn-outer">
+            → 외곽으로
+            <span class="btn-sub-id">Jalur Luar</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 업기 확인 다이얼로그 -->
+    <div id="stack-dialog" class="overlay hidden">
+      <div class="overlay-card">
+        <h2>같은 팀 말이 있습니다 <span class="lbl-id">Ada bidak satu tim!</span></h2>
+        <p class="dialog-desc">같은 칸에 도착했습니다. 업으시겠습니까?<br><span class="lbl-id">Apakah ingin menumpuk bidak?</span></p>
+        <div class="dialog-buttons">
+          <button id="btn-stack-yes" class="btn-primary">
+            업기 <span class="btn-sub-id">Tumpuk</span>
+          </button>
+          <button id="btn-stack-no" class="btn-secondary">
+            따로 이동 <span class="btn-sub-id">Pisah</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 전체 점수 팝업 ===== -->
+  <div id="scores-overlay" class="overlay hidden">
+    <div class="overlay-card scores-card">
+      <h2 class="scores-title">전체 점수 <span class="lbl-id">Semua Skor</span></h2>
+      <div id="scores-full-list" class="scores-full-list"></div>
+      <button id="btn-close-scores" class="btn-ghost" style="align-self:center; margin-top:8px;">
+        닫기 / Tutup
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== 미션 팝업 ===== -->
+  <div id="mission-overlay" class="overlay hidden">
+    <div class="overlay-card mission-card">
+      <div id="mission-sel-tag" class="mission-sel-tag"></div>
+      <h2 id="mission-title-ko" class="mission-title-ko"></h2>
+      <p id="mission-title-id" class="mission-title-id"></p>
+      <div class="mission-content-box">
+        <p id="mission-content-ko" class="mission-content-ko"></p>
+        <p id="mission-content-id" class="mission-content-id"></p>
+      </div>
+      <div class="mission-timer-wrap">
+        <div id="mission-timer-bar" class="mission-timer-bar"></div>
+        <span id="mission-timer-text" class="mission-timer-text">60</span>
+      </div>
+      <div class="mission-buttons">
+        <button id="btn-mission-success" class="btn-success btn-mission">
+          ✅ 미션 성공
+          <span class="btn-sub-id">Berhasil</span>
+        </button>
+        <button id="btn-mission-fail" class="btn-fail btn-mission">
+          ❌ 미션 실패
+          <span class="btn-sub-id">Gagal</span>
+        </button>
+        <button id="btn-mission-skip" class="btn-skip btn-mission">
+          건너뛰기
+          <span class="btn-sub-id">Lewati</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 점수 변동 알림 ===== -->
+  <div id="score-toast" class="score-toast hidden"></div>
+
+  <!-- ===== 결과 화면 (Screen 3) ===== -->
+  <div id="screen-result" class="screen">
+    <div class="result-container">
+      <header class="result-header">
+        <h1 class="title-ko">게임 종료!</h1>
+        <p class="title-id">Permainan Selesai!</p>
+      </header>
+      <div id="result-list" class="result-list"></div>
+      <div class="result-message">
+        <p class="result-msg-ko">완주한 팀도, 못 한 팀도 — 오늘 우리 모두가 함께 자랐습니다! 🌱</p>
+        <p class="result-msg-id">Tim yang selesai maupun belum — hari ini kita semua bertumbuh bersama! 🌱</p>
+      </div>
+      <button id="btn-restart" class="btn-primary btn-large">
+        다시 시작
+        <span class="btn-sub-id">Mulai Lagi</span>
+      </button>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
