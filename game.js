@@ -142,7 +142,39 @@ const SoundFX = (() => {
       src.start(t);
     },
 
-    /* 6. 게임 종료 엔딩 — 밝은 승리 팡파르 */
+    /* 6. 완주 박수 — 짧은 박수 소리 */
+    applause() {
+      const ac = resume(), t = ac.currentTime;
+      // 박수 = 짧은 백색 소음 버스트 여러 개 (bandpass 필터로 "탁탁" 질감)
+      const claps = [0, 0.12, 0.24, 0.38, 0.50, 0.60, 0.70, 0.80, 0.90, 1.00,
+                     1.08, 1.16, 1.22, 1.28, 1.34, 1.40, 1.44, 1.48, 1.52];
+      claps.forEach((dt, i) => {
+        const len = Math.floor(ac.sampleRate * 0.07);
+        const buf = ac.createBuffer(1, len, ac.sampleRate);
+        const d   = buf.getChannelData(0);
+        for (let j = 0; j < len; j++) {
+          d[j] = (Math.random() * 2 - 1) * Math.pow(1 - j / len, 3);
+        }
+        const src = ac.createBufferSource();
+        const bpf = ac.createBiquadFilter();
+        const env = ac.createGain();
+        bpf.type = 'bandpass';
+        bpf.frequency.value = 1200 + Math.random() * 400;
+        bpf.Q.value = 0.8;
+        src.buffer = buf;
+        src.connect(bpf);
+        bpf.connect(env);
+        env.connect(ac.destination);
+        // 뒤로 갈수록 점점 커지다가 서서히 줄어드는 박수 볼륨 곡선
+        const vol = i < 10
+          ? 0.18 + i * 0.04          // 점점 커짐
+          : 0.58 - (i - 10) * 0.065; // 서서히 줄어듦
+        env.gain.setValueAtTime(Math.max(vol, 0.05), t + dt);
+        src.start(t + dt);
+      });
+    },
+
+    /* 7. 게임 종료 엔딩 — 밝은 승리 팡파르 */
     gameEnd() {
       const ac = resume(), t = ac.currentTime;
       // 멜로디
@@ -897,6 +929,7 @@ async function applyMove(pieceId, path, isBaekdoHome) {
     });
     team.finishedCount = (team.finishedCount || 0) + allMovingIds.length;
     team.score += G.settings.completionBonus;
+    SoundFX.applause();
     showToast(`🎉 완주! +${G.settings.completionBonus}점 (Selesai!)`, 'positive');
     removeUsedYutResult();
     _pendingMove = null;
