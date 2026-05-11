@@ -969,7 +969,7 @@ function showMission(team) {
   document.getElementById('mission-content-id').textContent = mission.contentId;
 
   // 타이머
-  let sec = 60;
+  let sec = 180;
   const bar = document.getElementById('mission-timer-bar');
   const txt = document.getElementById('mission-timer-text');
   bar.style.width = '100%';
@@ -979,7 +979,7 @@ function showMission(team) {
   if (_missionTimer) clearInterval(_missionTimer);
   _missionTimer = setInterval(() => {
     sec--;
-    const pct = (sec / 60) * 100;
+    const pct = (sec / 180) * 100;
     bar.style.width = `${pct}%`;
     txt.textContent = sec;
     if (sec <= 10) bar.className = 'mission-timer-bar danger';
