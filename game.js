@@ -49,6 +49,117 @@ const MISSION_CELLS = new Set([3, 8, 13, 18]);
 const LUCKY_CELLS   = new Set([2, 6, 9, 12, 16, 19]);
 const START_CELL    = 0;
 
+/* ───────────────────────────────────────────────
+   0. 효과음 엔진 (Web Audio API — 외부 파일 없음)
+   ─────────────────────────────────────────────── */
+
+const SoundFX = (() => {
+  let _ctx = null;
+
+  function ctx() {
+    if (!_ctx) _ctx = new (window.AudioContext || window.webkitAudioContext)();
+    return _ctx;
+  }
+  function resume() {
+    const c = ctx();
+    if (c.state === 'suspended') c.resume();
+    return c;
+  }
+
+  // 단음 헬퍼 — freq·dur·파형·볼륨·시작시각·AudioContext
+  function tone(freq, dur, type = 'sine', gain = 0.28, when = 0, ac = null) {
+    ac = ac || resume();
+    const t   = when || ac.currentTime;
+    const osc = ac.createOscillator();
+    const env = ac.createGain();
+    osc.connect(env);
+    env.connect(ac.destination);
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t);
+    env.gain.setValueAtTime(0, t);
+    env.gain.linearRampToValueAtTime(gain, t + 0.01);
+    env.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    osc.start(t);
+    osc.stop(t + dur + 0.02);
+  }
+
+  return {
+    /* 1. 팀 시작 — 밝은 두 음 "딩~딩!" */
+    teamStart() {
+      const ac = resume(), t = ac.currentTime;
+      tone(523, 0.18, 'sine', 0.26, t,        ac); // C5
+      tone(659, 0.28, 'sine', 0.30, t + 0.18, ac); // E5
+    },
+
+    /* 2. 미션 시작 — 긴장감 있는 3음 상승 */
+    missionStart() {
+      const ac = resume(), t = ac.currentTime;
+      tone(392, 0.20, 'square', 0.14, t,        ac); // G4
+      tone(494, 0.20, 'square', 0.14, t + 0.22, ac); // B4
+      tone(587, 0.38, 'square', 0.18, t + 0.46, ac); // D5
+    },
+
+    /* 3. 행운 — 반짝이는 4음 아르페지오 */
+    lucky() {
+      const ac = resume(), t = ac.currentTime;
+      tone(523,  0.12, 'sine', 0.24, t,        ac); // C5
+      tone(659,  0.12, 'sine', 0.24, t + 0.12, ac); // E5
+      tone(784,  0.12, 'sine', 0.24, t + 0.24, ac); // G5
+      tone(1047, 0.28, 'sine', 0.28, t + 0.36, ac); // C6
+    },
+
+    /* 4. 잡힌 경우 — 하강 사이렌 "웅~" */
+    capture() {
+      const ac = resume(), t = ac.currentTime;
+      const osc = ac.createOscillator();
+      const env = ac.createGain();
+      osc.connect(env);
+      env.connect(ac.destination);
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(560, t);
+      osc.frequency.exponentialRampToValueAtTime(80, t + 0.45);
+      env.gain.setValueAtTime(0.32, t);
+      env.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+      osc.start(t);
+      osc.stop(t + 0.48);
+    },
+
+    /* 5. 타이머 째깍 — 클릭 잡음 (마지막 10초) */
+    tick() {
+      const ac = resume(), t = ac.currentTime;
+      const len = Math.floor(ac.sampleRate * 0.035);
+      const buf = ac.createBuffer(1, len, ac.sampleRate);
+      const d   = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) {
+        d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 10);
+      }
+      const src = ac.createBufferSource();
+      const env = ac.createGain();
+      src.buffer = buf;
+      src.connect(env);
+      env.connect(ac.destination);
+      env.gain.setValueAtTime(0.55, t);
+      src.start(t);
+    },
+
+    /* 6. 게임 종료 엔딩 — 밝은 승리 팡파르 */
+    gameEnd() {
+      const ac = resume(), t = ac.currentTime;
+      // 멜로디
+      const seq = [
+        [523,0.12],[659,0.12],[784,0.12],
+        [1047,0.10],[988,0.10],[1047,0.38],
+      ];
+      let dt = 0;
+      seq.forEach(([f, d]) => { tone(f, d + 0.18, 'sine', 0.30, t + dt, ac); dt += d; });
+      // 베이스 화음
+      tone(262, 0.9, 'triangle', 0.18, t, ac); // C4
+      tone(330, 0.9, 'triangle', 0.14, t, ac); // E4
+      tone(392, 0.9, 'triangle', 0.14, t, ac); // G4
+    },
+  };
+})();
+
 // 미션 목록
 const MISSIONS = [
   {
@@ -803,6 +914,7 @@ async function applyMove(pieceId, path, isBaekdoHome) {
   if (captureInfo) {
     // PRD: 윷·모로 잡은 경우 추가 던지기는 1번만 (윷·모 extra가 이미 있으므로 추가 안 함)
     const resultWasExtra = _pendingMove && _pendingMove.result && _pendingMove.result.extra;
+    SoundFX.capture();
     showToast(
       `🎯 잡았습니다! ${captureInfo.capturedTeamName} 말 ${captureInfo.count}개 → 출발로! 한 번 더! (Tangkap!)`,
       'positive'
@@ -941,6 +1053,7 @@ function checkCellEvent(pos, team) {
   if (LUCKY_CELLS.has(pos)) {
     const bonus = 5;
     team.score += bonus;
+    SoundFX.lucky();
     showToast(`행운! +${bonus}점 ★`, 'positive');
     saveState(); renderScoreboard();
     return 'lucky';
@@ -958,6 +1071,7 @@ let _missionTeam = null;
 function showMission(team) {
   _missionTeam = team;
   G.phase = 'mission';
+  SoundFX.missionStart();
   const mission = MISSIONS[Math.floor(Math.random() * MISSIONS.length)];
   const selColors = { '자기':'#E3F2FD', '대인관계':'#E8F5E9', '공동체':'#FFF3E0', '마음건강':'#FCE4EC' };
 
@@ -982,7 +1096,7 @@ function showMission(team) {
     const pct = (sec / 180) * 100;
     bar.style.width = `${pct}%`;
     txt.textContent = sec;
-    if (sec <= 10) bar.className = 'mission-timer-bar danger';
+    if (sec <= 10) { bar.className = 'mission-timer-bar danger'; SoundFX.tick(); }
     else if (sec <= 30) bar.className = 'mission-timer-bar warning';
     if (sec <= 0) {
       clearInterval(_missionTimer);
@@ -1055,6 +1169,7 @@ function nextTurn() {
 
   const nextTeam = G.teams[G.currentTeamIndex];
   nextTeam.hasInputThisTurn = false;
+  SoundFX.teamStart();
   showToast(`${nextTeam.name} 차례입니다! (Giliran ${nextTeam.name})`, 'positive');
   saveState(); renderAll(); updateActionButtons();
 }
@@ -1074,6 +1189,7 @@ function checkGameOver() {
 }
 
 function showResultScreen() {
+  SoundFX.gameEnd();
   const sorted = [...G.teams].sort((a, b) => b.score - a.score);
   const list = document.getElementById('result-list');
   list.innerHTML = '';
@@ -1203,6 +1319,7 @@ document.getElementById('btn-start').addEventListener('click', () => {
   switchScreen('screen-game');
   renderAll();
   updateActionButtons();
+  SoundFX.teamStart();
 });
 
 /* ───────────────────────────────────────────────
